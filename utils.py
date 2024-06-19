@@ -17,3 +17,7 @@ def load_gemini_pro_model():
     return gemini_pro_model
 
 
+def gemini_pro_vision_response(prompt, image):
+    gemini_pro_vision_model = genai.GenerativeModel("gemini-pro-vision")
+    response = gemini_pro_vision_model.generate_content([prompt, image])
+    return response.text
