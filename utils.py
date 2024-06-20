@@ -21,3 +21,9 @@ def gemini_pro_vision_response(prompt, image):
     gemini_pro_vision_model = genai.GenerativeModel("gemini-pro-vision")
     response = gemini_pro_vision_model.generate_content([prompt, image])
     return response.text
+
+
+def gemini_pro_response(prompt):
+    gemini_pro_model = genai.GenerativeModel('gemini-pro')
+    response = gemini_pro_model.generate_content(prompt)
+    return response.text
