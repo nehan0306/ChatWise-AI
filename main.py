@@ -2,13 +2,14 @@ import os
 import streamlit as st
 from PIL import Image
 import fitz
+import pyttsx3
 from streamlit_option_menu import option_menu
 from utils import load_gemini_pro_model, gemini_pro_vision_response, gemini_pro_response
 
 working_directory = os.path.dirname(os.path.abspath(__file__))
 
 st.set_page_config(
-    page_title="Gemini AI",
+    page_title="ChatWise",
     page_icon="*",
     layout="centered"
 )
@@ -21,9 +22,19 @@ def translate_role(role):
         return role
 
 
+def text_to_voice(text):
+    if text:
+        engine = pyttsx3.init()
+        engine.setProperty('rate', 150)
+        engine.setProperty('volume', 0.9)
+
+        engine.say(text)
+        engine.runAndWait()
+
+
 with st.sidebar:
-    choice = option_menu("Gemini AI", ["ChatBot", "Image Captioning", "PDF Reader", "Ask me anything"],
-                         menu_icon='robot', icons=["", "", "", ""], default_index=0)
+    choice = option_menu("ChatWise AI", ["ChatBot", "PDF Summarizer", "Ask Me Anything", "Image Captioning"],
+                         menu_icon='robot', icons=["chat-square-text", "file-pdf", "question-square", "image"], default_index=0)
 
 if choice == 'ChatBot':
     model = load_gemini_pro_model()
@@ -42,8 +53,10 @@ if choice == 'ChatBot':
 
         response = st.session_state.chat_session.send_message(prompt)
 
+        st.session_state.response = response.text
+
         with st.chat_message('assistant'):
-            st.markdown(response.text)
+            st.markdown(st.session_state.response)
 
 if choice == 'Image Captioning':
     st.title("Image Captioning")
@@ -56,17 +69,16 @@ if choice == 'Image Captioning':
         col1, col2 = st.columns(2)
 
         with col1:
-            resize_image = image.resize(512, 512)
-            st.image(resize_image)
+            st.image(image)
 
         default_prompt = "Give a short description of this image"
 
-        caption = gemini_pro_vision_response(default_prompt, image)
+        st.session_state.response = gemini_pro_vision_response(default_prompt, image)
 
         with col2:
-            st.info(caption)
+            st.info(st.session_state.response)
 
-if choice == 'PDF Reader':
+if choice == 'PDF Summarizer':
     st.title("PDF Reader")
 
     upload_pdf = st.file_uploader("Upload a PDF", type=['pdf'])
@@ -81,17 +93,20 @@ if choice == 'PDF Reader':
 
             prompt = f"Summarize this text extracted from a PDF: {pdf_text}"
 
-            response = gemini_pro_response(prompt)
-            st.markdown(response)
+            st.session_state.response = gemini_pro_response(prompt)
+            st.markdown(st.session_state.response)
 
-if choice == 'Ask me anything':
+if choice == 'Ask Me Anything':
     st.title("Ask me a question")
 
     prompt = st.text_area(label='Please enter a question', placeholder="Ask me anything")
 
     if st.button("Get response"):
-        response = gemini_pro_response(prompt)
-        st.markdown(response)
+        st.session_state.response = gemini_pro_response(prompt)
+        st.markdown(st.session_state.response)
 
-
+if st.sidebar.button("Read Text") and st.session_state.response:
+    text_to_voice(st.session_state.response)
+    if choice != "ChatBot":
+        st.markdown(st.session_state.response)
 
